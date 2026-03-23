@@ -48,10 +48,15 @@ body{background:#080f0e;color:#e8f5f3;font-family:-apple-system,BlinkMacSystemFo
 .notefield input{width:100%;background:#112220;border:1px solid #1e3530;border-radius:8px;padding:8px 9px;color:#e8f5f3;font-family:inherit;font-size:13px;outline:none}
 .savebtn{margin-top:9px;width:100%;padding:11px;border-radius:9px;border:none;background:linear-gradient(135deg,#00c9a7,#38bdf8);color:#080f0e;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
 .histlabel{font-size:9px;font-weight:700;letter-spacing:1px;color:#6b9e98;text-transform:uppercase;margin:13px 0 6px}
-.hrow{display:grid;grid-template-columns:68px 1fr 1fr 1fr;gap:4px;padding:7px 9px;background:#112220;border-radius:8px;margin-bottom:3px;font-size:12px;border:1px solid #1e3530}
-.hdate{color:#6b9e98}.hwt{font-weight:600;color:#00c9a7}.hreps{color:#38bdf8}.hnote{color:#6b9e98;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.hrow{background:#112220;border-radius:8px;margin-bottom:4px;border:1px solid #1e3530;overflow:hidden}
+.hrow-main{display:grid;grid-template-columns:60px 1fr 1fr auto;gap:4px;padding:7px 9px;align-items:center;font-size:12px}
+.hdate{color:#6b9e98}
+.hwt{font-weight:600;color:#00c9a7}
+.hreps{color:#38bdf8}
+.hdelbtn{background:none;border:none;color:#e53935;cursor:pointer;font-size:13px;padding:0 2px;font-family:inherit;line-height:1}
+.hnote-row{font-size:11px;color:#6b9e98;padding:0 9px 7px;font-style:italic;border-top:1px solid #1e3530;padding-top:5px;margin-top:2px}
 .nohist{font-size:12px;color:#6b9e98;font-style:italic;padding:5px 0}
-.clearbtn{font-size:11px;color:#e53935;background:none;border:none;cursor:pointer;padding:5px 0;font-family:inherit}
+.clearbtn{font-size:11px;color:#e53935;background:none;border:none;cursor:pointer;padding:6px 0;font-family:inherit;display:block}
 .bottombar{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(8,15,14,.97);border-top:1px solid #1e3530;padding:9px 14px 18px;display:flex;gap:7px}
 .bbtn{flex:1;padding:11px 6px;border-radius:9px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;border:none}
 .bbtn-dl{background:#112220;border:1px solid #00c9a7;color:#00c9a7}
@@ -94,65 +99,152 @@ body{background:#080f0e;color:#e8f5f3;font-family:-apple-system,BlinkMacSystemFo
 <div class="toast" id="toast"></div>
 <div class="overlay" id="modal">
   <div class="modal">
-    <h3>Restore Backup?</h3>
-    <p>This will merge your backup with current data. Nothing deleted, only new entries added.</p>
+    <h3 id="modalTitle">Confirm</h3>
+    <p id="modalMsg"></p>
     <div class="mbtns">
       <button class="mcancel" id="cancelBtn">Cancel</button>
-      <button class="mok" id="confirmBtn">Restore</button>
+      <button class="mok" id="confirmBtn">OK</button>
     </div>
   </div>
 </div>
 <script>
 var DAYS = [
-  {id:"mon",label:"Mon",full:"Monday",title:"Back and Biceps",sections:[
-    {name:"Pull-Up Progression",ex:[{name:"Negative pull-ups",sets:"3 x 5"},{name:"Band-assisted pull-ups",sets:"2 x 4-6"}]},
-    {name:"Cable Machine",ex:[{name:"Cable lat pulldown",sets:"3 x 10-12"},{name:"Cable seated row",sets:"3 x 10-12"},{name:"Cable face pulls",sets:"3 x 15"},{name:"Cable bicep curl",sets:"3 x 12"}]},
-    {name:"Adductor and Abductor",ex:[{name:"Hip abductor",sets:"3 x 15"},{name:"Hip adductor",sets:"3 x 15"}]}
+  {id:"d1",label:"Day 1",full:"Day 1",title:"Back and Biceps - Cable Day",sections:[
+    {name:"Pull-Up Progression",ex:[
+      {name:"Negative pull-ups",sets:"3 x 5 (5 sec lower)"},
+      {name:"Band-assisted pull-ups",sets:"2 x 4-6"}
+    ]},
+    {name:"Cable Machine",ex:[
+      {name:"Cable lat pulldown",sets:"3 x 10-12"},
+      {name:"Cable seated row",sets:"3 x 10-12"},
+      {name:"Cable face pulls",sets:"3 x 15"},
+      {name:"Cable bicep curl",sets:"3 x 12"}
+    ]},
+    {name:"Adductor and Abductor",ex:[
+      {name:"Hip abductor",sets:"3 x 15"},
+      {name:"Hip adductor",sets:"3 x 15"}
+    ]},
+    {name:"Ab Finisher",ex:[
+      {name:"Hanging knee raises",sets:"3 x 10-12"},
+      {name:"Pallof press",sets:"3 x 12 each side"}
+    ]}
   ]},
-  {id:"tue",label:"Tue",full:"Tuesday",title:"Chest Shoulders and Triceps",sections:[
-    {name:"Compound",ex:[{name:"Bar bench press",sets:"4 x 8-10"},{name:"DB incline press",sets:"3 x 10"}]},
-    {name:"Shoulders",ex:[{name:"DB overhead press",sets:"3 x 10-12"},{name:"Lateral raises",sets:"3 x 12-15"}]},
-    {name:"Triceps",ex:[{name:"Overhead DB tricep extension",sets:"3 x 12"},{name:"Diamond push-ups",sets:"2 x max"}]}
+  {id:"d2",label:"Day 2",full:"Day 2",title:"Chest Shoulders and Triceps",sections:[
+    {name:"Compound",ex:[
+      {name:"Bar bench press",sets:"4 x 8-10"},
+      {name:"DB incline press",sets:"3 x 10"},
+      {name:"DB chest fly",sets:"3 x 12"}
+    ]},
+    {name:"Shoulders",ex:[
+      {name:"DB overhead press",sets:"3 x 10-12"},
+      {name:"Lateral raises",sets:"3 x 12-15"},
+      {name:"Rear delt fly",sets:"3 x 12-15"}
+    ]},
+    {name:"Triceps",ex:[
+      {name:"Overhead DB tricep extension",sets:"3 x 12"},
+      {name:"Diamond push-ups",sets:"2 x max"}
+    ]}
   ]},
-  {id:"wed",label:"Wed",full:"Wednesday",title:"Legs and Glutes",sections:[
-    {name:"Compound",ex:[{name:"Goblet squat",sets:"4 x 10-12"},{name:"Romanian deadlift",sets:"3 x 10"}]},
-    {name:"Glutes and Isolation",ex:[{name:"Bulgarian split squat",sets:"3 x 10 each"},{name:"Hip thrust",sets:"4 x 12"},{name:"Calf raises",sets:"3 x 15"}]}
+  {id:"d3",label:"Day 3",full:"Day 3",title:"Legs and Glutes - Heavy",sections:[
+    {name:"Compound",ex:[
+      {name:"Goblet squat",sets:"4 x 10-12"},
+      {name:"Romanian deadlift",sets:"3 x 10"}
+    ]},
+    {name:"Glutes and Isolation",ex:[
+      {name:"Bulgarian split squat",sets:"3 x 10 each"},
+      {name:"Hip thrust",sets:"4 x 12"},
+      {name:"Calf raises",sets:"3 x 15"}
+    ]},
+    {name:"Ab Finisher",ex:[
+      {name:"Reverse crunches",sets:"3 x 15"},
+      {name:"Dead bug",sets:"3 x 10 each"}
+    ]}
   ]},
-  {id:"thu",label:"Thu",full:"Thursday",title:"Back and Biceps",sections:[
-    {name:"Pull-Up Progression",ex:[{name:"Chin-up",sets:"3 x max"},{name:"Negative pull-ups",sets:"2 x 5"}]},
-    {name:"Back",ex:[{name:"DB bent-over row",sets:"3 x 10-12"},{name:"DB renegade row",sets:"3 x 8 each"}]},
-    {name:"Biceps",ex:[{name:"Bar bicep curl",sets:"3 x 12"},{name:"Hammer curl",sets:"3 x 12"}]}
+  {id:"d4",label:"Day 4",full:"Day 4",title:"Back and Biceps",sections:[
+    {name:"Pull-Up Progression",ex:[
+      {name:"Chin-up",sets:"3 x max"},
+      {name:"Negative pull-ups",sets:"2 x 5 (5 sec lower)"}
+    ]},
+    {name:"Back",ex:[
+      {name:"DB bent-over row",sets:"3 x 10-12"},
+      {name:"DB renegade row",sets:"3 x 8 each"}
+    ]},
+    {name:"Biceps",ex:[
+      {name:"Bar bicep curl",sets:"3 x 12"},
+      {name:"Hammer curl",sets:"3 x 12"}
+    ]},
+    {name:"Ab Finisher",ex:[
+      {name:"Bicycle crunches",sets:"3 x 20"},
+      {name:"Plank",sets:"3 x 30-45 sec"}
+    ]}
   ]},
-  {id:"fri",label:"Fri",full:"Friday",title:"Full Upper Body",sections:[
-    {name:"Compound",ex:[{name:"Bar bench press",sets:"3 x 6-8"},{name:"DB bent-over row",sets:"3 x 8"}]},
-    {name:"Supersets",ex:[{name:"DB shoulder press and lateral raise",sets:"3 rounds"},{name:"DB curl and tricep kickback",sets:"3 rounds"}]},
-    {name:"Core Finisher",ex:[{name:"Plank",sets:"3 x 30-45 sec"},{name:"Dead bug",sets:"3 x 10 each"}]}
+  {id:"d5",label:"Day 5",full:"Day 5",title:"Legs and Glutes - Burn and Shape",sections:[
+    {name:"Compound",ex:[
+      {name:"Sumo squat",sets:"4 x 12"},
+      {name:"Reverse lunges",sets:"3 x 10 each"}
+    ]},
+    {name:"Hamstrings and Glutes",ex:[
+      {name:"Single leg deadlift",sets:"3 x 10 each"},
+      {name:"DB hamstring curl",sets:"3 x 12"},
+      {name:"Glute kickbacks",sets:"3 x 15 each"}
+    ]},
+    {name:"Accessories",ex:[
+      {name:"Lateral banded walks",sets:"3 x 15 each"},
+      {name:"Calf raises",sets:"3 x 15"}
+    ]}
   ]}
 ];
+
 var curDay = DAYS[0];
-var pendingData = null;
+
 function sk(dayId,name){return "lll_"+dayId+"_"+name.replace(/\W+/g,"_");}
 function ld(k){try{return JSON.parse(localStorage.getItem(k)||"[]");}catch(e){return[];}}
 function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 function td(){return new Date().toISOString().split("T")[0];}
 function fmt(s){if(!s)return"";var p=s.split("-");return p[1]+"/"+p[2]+"/"+p[0].slice(2);}
+
 function getPR(dayId,name){
   var logs=ld(sk(dayId,name));
   if(!logs.length)return null;
   return logs.reduce(function(b,l){return parseFloat(l.weight||0)>parseFloat(b?b.weight||0:0)?l:b;},null);
 }
+
 function getTot(){
   var t=0;
-  DAYS.forEach(function(d){t+=parseInt(localStorage.getItem("lll_sess_"+d.id)||"0");});
+  DAYS.forEach(function(d){
+    var dates=ld("lll_trained_"+d.id);
+    t+=dates.length;
+  });
   return t;
 }
+
+function recordSession(dayId){
+  var key="lll_trained_"+dayId;
+  var dates=ld(key);
+  var today=td();
+  if(dates.indexOf(today)===-1){dates.push(today);sv(key,dates);}
+}
+
 function showToast(msg){
   var el=document.getElementById("toast");
   el.textContent=msg;el.classList.add("show");
   setTimeout(function(){el.classList.remove("show");},2200);
 }
+
+function showModal(title,msg,okLabel,onOk){
+  document.getElementById("modalTitle").textContent=title;
+  document.getElementById("modalMsg").textContent=msg;
+  document.getElementById("confirmBtn").textContent=okLabel;
+  document.getElementById("modal").classList.add("open");
+  document.getElementById("confirmBtn").onclick=function(){closeModal();onOk();};
+}
+
+function closeModal(){document.getElementById("modal").classList.remove("open");}
+document.getElementById("cancelBtn").addEventListener("click",closeModal);
+document.getElementById("modal").addEventListener("click",function(e){if(e.target===document.getElementById("modal"))closeModal();});
+
 document.getElementById("backupBtn").addEventListener("click",function(){
-  var bk={version:1,exported:new Date().toISOString(),data:{}};
+  var bk={version:2,exported:new Date().toISOString(),data:{}};
   for(var i=0;i<localStorage.length;i++){
     var k=localStorage.key(i);
     if(k&&k.startsWith("lll_"))bk.data[k]=localStorage.getItem(k);
@@ -165,9 +257,9 @@ document.getElementById("backupBtn").addEventListener("click",function(){
   document.body.removeChild(a);URL.revokeObjectURL(url);
   showToast("Backup downloaded!");
 });
-document.getElementById("restoreBtn").addEventListener("click",function(){
-  document.getElementById("upfile").click();
-});
+
+document.getElementById("restoreBtn").addEventListener("click",function(){document.getElementById("upfile").click();});
+
 document.getElementById("upfile").addEventListener("change",function(e){
   var file=e.target.files[0];if(!file)return;
   var reader=new FileReader();
@@ -175,38 +267,38 @@ document.getElementById("upfile").addEventListener("change",function(e){
     try{
       var bk=JSON.parse(ev.target.result);
       if(!bk.data)throw new Error("bad");
-      pendingData=bk.data;
-      document.getElementById("modal").classList.add("open");
+      var pendingData=bk.data;
+      showModal("Restore Backup?","Merge backup with current data. Nothing deleted, only new entries added.","Restore",function(){
+        var count=0;
+        Object.keys(pendingData).forEach(function(k){
+          var v=pendingData[k];
+          if(k.startsWith("lll_")&&k.indexOf("trained")===-1){
+            try{
+              var ex=JSON.parse(localStorage.getItem(k)||"[]");
+              var inc=JSON.parse(v||"[]");
+              inc.forEach(function(entry){
+                var dup=ex.some(function(e){return e.date===entry.date&&e.weight===entry.weight&&e.reps===entry.reps;});
+                if(!dup){ex.push(entry);count++;}
+              });
+              localStorage.setItem(k,JSON.stringify(ex));
+            }catch(err){localStorage.setItem(k,v);}
+          }else if(k.startsWith("lll_trained_")){
+            try{
+              var exd=JSON.parse(localStorage.getItem(k)||"[]");
+              var ind=JSON.parse(v||"[]");
+              ind.forEach(function(date){if(exd.indexOf(date)===-1)exd.push(date);});
+              localStorage.setItem(k,JSON.stringify(exd));
+            }catch(err){localStorage.setItem(k,v);}
+          }
+        });
+        showToast("Restored "+count+" entries!");
+        renderDay(curDay);
+      });
     }catch(err){showToast("Invalid backup file");}
   };
   reader.readAsText(file);e.target.value="";
 });
-document.getElementById("confirmBtn").addEventListener("click",function(){
-  if(!pendingData)return;
-  var count=0;
-  Object.keys(pendingData).forEach(function(k){
-    var v=pendingData[k];
-    if(k.startsWith("lll_")&&k.indexOf("sess")===-1){
-      try{
-        var ex=JSON.parse(localStorage.getItem(k)||"[]");
-        var inc=JSON.parse(v||"[]");
-        inc.forEach(function(entry){
-          var dup=ex.some(function(e){return e.date===entry.date&&e.weight===entry.weight&&e.reps===entry.reps;});
-          if(!dup){ex.push(entry);count++;}
-        });
-        localStorage.setItem(k,JSON.stringify(ex));
-      }catch(err){localStorage.setItem(k,v);}
-    }else if(k.startsWith("lll_sess_")){
-      var ea=parseInt(localStorage.getItem(k)||"0");
-      var ia=parseInt(v||"0");
-      localStorage.setItem(k,Math.max(ea,ia));
-    }
-  });
-  closeModal();showToast("Restored "+count+" entries!");renderDay(curDay);pendingData=null;
-});
-document.getElementById("cancelBtn").addEventListener("click",closeModal);
-document.getElementById("modal").addEventListener("click",function(e){if(e.target===document.getElementById("modal"))closeModal();});
-function closeModal(){document.getElementById("modal").classList.remove("open");pendingData=null;}
+
 function renderDay(day){
   document.querySelectorAll(".dpill").forEach(function(p){p.classList.toggle("active",p.dataset.id===day.id);});
   var c=document.getElementById("content");
@@ -221,6 +313,7 @@ function renderDay(day){
   });
   document.getElementById("sessNum").textContent=getTot();
 }
+
 function buildCard(dayId,ex){
   var key=ex.name.replace(/\W+/g,"_");
   var pr=getPR(dayId,ex.name);
@@ -249,7 +342,7 @@ function buildCard(dayId,ex){
   grid.appendChild(makeField("Reps Done","r_"+dayId+"_"+key,"number","0",{inputmode:"numeric"}));
   var nf=document.createElement("div");nf.className="notefield";
   var nl=document.createElement("label");nl.textContent="Notes";
-  var ni=document.createElement("input");ni.type="text";ni.id="n_"+dayId+"_"+key;ni.placeholder="How did it feel?";
+  var ni=document.createElement("input");ni.type="text";ni.id="n_"+dayId+"_"+key;ni.placeholder="How did it feel? Form cues...";
   nf.appendChild(nl);nf.appendChild(ni);
   var btn=document.createElement("button");btn.className="savebtn";btn.textContent="Save Entry";
   (function(dId,exName,k){btn.addEventListener("click",function(){logEntry(dId,exName,k);});})(dayId,ex.name,key);
@@ -265,20 +358,68 @@ function buildCard(dayId,ex){
   renderHist(dayId,ex.name,key);
   return card;
 }
+
 function renderHist(dayId,name,key){
   var el=document.getElementById("hist_"+dayId+"_"+key);
   if(!el)return;
   var logs=ld(sk(dayId,name));
   if(!logs.length){el.innerHTML="<div class='nohist'>No entries yet</div>";return;}
-  var recent=logs.slice().reverse().slice(0,6);
-  var html=recent.map(function(l){
-    return "<div class='hrow'><span class='hdate'>"+fmt(l.date)+"</span><span class='hwt'>"+(l.weight?l.weight+"lbs":"--")+"</span><span class='hreps'>"+(l.reps?l.reps+" reps":"--")+"</span><span class='hnote'>"+(l.notes||"")+"</span></div>";
-  }).join("");
-  el.innerHTML=html;
-  var cb=document.createElement("button");cb.className="clearbtn";cb.textContent="Clear history";
-  (function(dId,n,k){cb.addEventListener("click",function(){clearHist(dId,n,k);});})(dayId,name,key);
+  el.innerHTML="";
+  var recent=logs.slice().reverse().slice(0,8);
+  var startIdx=logs.length-1;
+  recent.forEach(function(l,i){
+    var realIdx=startIdx-i;
+    var row=document.createElement("div");row.className="hrow";
+    var main=document.createElement("div");main.className="hrow-main";
+    var dateEl=document.createElement("span");dateEl.className="hdate";dateEl.textContent=fmt(l.date);
+    var wtEl=document.createElement("span");wtEl.className="hwt";wtEl.textContent=l.weight?l.weight+"lbs":"--";
+    var repsEl=document.createElement("span");repsEl.className="hreps";repsEl.textContent=l.reps?l.reps+" reps":"--";
+    var delBtn=document.createElement("button");delBtn.className="hdelbtn";delBtn.textContent="x";
+    (function(dId,n,k,idx,entry){
+      delBtn.addEventListener("click",function(e){
+        e.stopPropagation();
+        var desc=fmt(entry.date)+(entry.weight?" - "+entry.weight+"lbs":"")+(entry.reps?" - "+entry.reps+" reps":"");
+        showModal("Delete Entry?","Remove: "+desc+"?","Delete",function(){
+          var logs2=ld(sk(dId,n));
+          logs2.splice(idx,1);
+          sv(sk(dId,n),logs2);
+          renderHist(dId,n,k);
+          document.getElementById("sessNum").textContent=getTot();
+          var newPR=getPR(dId,n);
+          var card=document.getElementById("card_"+dId+"_"+k);
+          if(card){
+            var pill=card.querySelector(".prpill");
+            if(newPR){
+              if(!pill){pill=document.createElement("span");pill.className="prpill";card.querySelector(".exright").insertBefore(pill,card.querySelector(".chev"));}
+              pill.textContent="PR "+newPR.weight+"lbs";
+            }else{if(pill)pill.remove();}
+          }
+        });
+      });
+    })(dayId,name,key,realIdx,l);
+    main.appendChild(dateEl);main.appendChild(wtEl);main.appendChild(repsEl);main.appendChild(delBtn);
+    row.appendChild(main);
+    if(l.notes&&l.notes.trim()){
+      var nr=document.createElement("div");nr.className="hnote-row";nr.textContent="Note: "+l.notes;
+      row.appendChild(nr);
+    }
+    el.appendChild(row);
+  });
+  var cb=document.createElement("button");cb.className="clearbtn";cb.textContent="Clear all history";
+  (function(dId,n,k){
+    cb.addEventListener("click",function(){
+      showModal("Clear History?","Delete ALL history for "+n+"? This cannot be undone.","Clear All",function(){
+        localStorage.removeItem(sk(dId,n));
+        renderHist(dId,n,k);
+        var card=document.getElementById("card_"+dId+"_"+k);
+        if(card){var p=card.querySelector(".prpill");if(p)p.remove();}
+        showToast("History cleared");
+      });
+    });
+  })(dayId,name,key);
   el.appendChild(cb);
 }
+
 function logEntry(dayId,name,key){
   var d=document.getElementById("d_"+dayId+"_"+key);
   var w=document.getElementById("w_"+dayId+"_"+key);
@@ -288,8 +429,7 @@ function logEntry(dayId,name,key){
   if(!weight&&!reps){showToast("Enter weight or reps!");return;}
   var k=sk(dayId,name);var logs=ld(k);var pr=getPR(dayId,name);
   logs.push({date:date,weight:weight,reps:reps,notes:notes});sv(k,logs);
-  var sessK="lll_sess_"+dayId;
-  localStorage.setItem(sessK,(parseInt(localStorage.getItem(sessK)||"0")+1));
+  recordSession(dayId);
   var isPR=weight&&parseFloat(weight)>parseFloat(pr?pr.weight||0:0);
   showToast(isPR?"New PR! Crushed it!":"Entry saved!");
   if(w)w.value="";if(r)r.value="";if(n)n.value="";
@@ -304,14 +444,7 @@ function logEntry(dayId,name,key){
     pill.textContent="PR "+newPR.weight+"lbs";
   }
 }
-function clearHist(dayId,name,key){
-  if(!confirm("Clear all history for "+name+"?"))return;
-  localStorage.removeItem(sk(dayId,name));
-  renderHist(dayId,name,key);
-  var card=document.getElementById("card_"+dayId+"_"+key);
-  if(card){var p=card.querySelector(".prpill");if(p)p.remove();}
-  showToast("History cleared");
-}
+
 var nav=document.getElementById("daynav");
 DAYS.forEach(function(d){
   var pill=document.createElement("button");
@@ -319,9 +452,7 @@ DAYS.forEach(function(d){
   pill.addEventListener("click",function(){curDay=d;renderDay(d);});
   nav.appendChild(pill);
 });
-var dow=new Date().getDay();
-var dayMap={1:0,2:1,3:2,4:3,5:4};
-curDay=DAYS[dayMap[dow]!==undefined?dayMap[dow]:0];
+curDay=DAYS[0];
 renderDay(curDay);
 </script>
 </body>
